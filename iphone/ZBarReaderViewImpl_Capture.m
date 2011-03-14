@@ -142,6 +142,7 @@
     captureReader = nil;
     [device release];
     device = nil;
+    [session removeInput:input];
     [input release];
     input = nil;
     [session release];
