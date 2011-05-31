@@ -25,14 +25,16 @@
 #import <ZBarSDK/ZBarReaderView.h>
 #import <ZBarSDK/ZBarCaptureReader.h>
 #import <ZBarSDK/ZBarHelpController.h>
+#import <ZBarSDK/ZBarCameraSimulator.h>
 
 #define MODULE ZBarReaderViewController
 #import "debug.h"
 
 @implementation ZBarReaderViewController
 
-@synthesize scanner, readerDelegate, showsZBarControls, tracksSymbols,
-    enableCache, cameraOverlayView, cameraViewTransform, readerView, scanCrop;
+@synthesize scanner, readerDelegate, showsZBarControls,
+    supportedOrientationsMask, tracksSymbols, enableCache, cameraOverlayView,
+    cameraViewTransform, readerView, scanCrop;
 @dynamic sourceType, allowsEditing, allowsImageEditing, showsCameraControls,
     showsHelpOnFail, cameraMode, takesPicture, maxScanDimension;
 
@@ -42,6 +44,25 @@
         return(NO);
     return(TARGET_IPHONE_SIMULATOR ||
            [UIImagePickerController isSourceTypeAvailable: sourceType]);
+}
+
+- (void) _init
+{
+    supportedOrientationsMask =
+        ZBarOrientationMask(UIInterfaceOrientationPortrait);
+    showsZBarControls = tracksSymbols = enableCache = YES;
+    scanCrop = CGRectMake(0, 0, 1, 1);
+    cameraViewTransform = CGAffineTransformIdentity;
+
+    // create our own scanner to store configuration,
+    // independent of whether view is loaded
+    scanner = [ZBarImageScanner new];
+    [scanner setSymbology: 0
+             config: ZBAR_CFG_X_DENSITY
+             to: 3];
+    [scanner setSymbology: 0
+             config: ZBAR_CFG_Y_DENSITY
+             to: 3];
 }
 
 - (id) init
@@ -59,26 +80,25 @@
         return(nil);
 
     self.wantsFullScreenLayout = YES;
+    [self _init];
+    return(self);
+}
 
-    showsZBarControls = tracksSymbols = enableCache = YES;
-    scanCrop = CGRectMake(0, 0, 1, 1);
-    cameraViewTransform = CGAffineTransformIdentity;
+- (id) initWithCoder: (NSCoder*) decoder
+{
+    self = [super initWithCoder: decoder];
+    if(!self)
+        return(nil);
 
-    // create our own scanner to store configuration,
-    // independent of whether view is loaded
-    scanner = [ZBarImageScanner new];
-    [scanner setSymbology: 0
-             config: ZBAR_CFG_X_DENSITY
-             to: 3];
-    [scanner setSymbology: 0
-             config: ZBAR_CFG_Y_DENSITY
-             to: 3];
-
+    [self _init];
     return(self);
 }
 
 - (void) cleanup
 {
+    cameraSim.readerView = nil;
+    [cameraSim release];
+    cameraSim = nil;
     readerView.readerDelegate = nil;
     [readerView release];
     readerView = nil;
@@ -118,6 +138,10 @@
     r.size.height = 54;
     controls = [[UIView alloc]
                    initWithFrame: r];
+    controls.autoresizingMask =
+        UIViewAutoresizingFlexibleWidth |
+        UIViewAutoresizingFlexibleHeight |
+        UIViewAutoresizingFlexibleTopMargin;
     controls.backgroundColor = [UIColor blackColor];
 
     UIToolbar *toolbar =
@@ -125,6 +149,9 @@
     r.origin.y = 0;
     toolbar.frame = r;
     toolbar.barStyle = UIBarStyleBlackOpaque;
+    toolbar.autoresizingMask =
+        UIViewAutoresizingFlexibleWidth |
+        UIViewAutoresizingFlexibleHeight;
 
     UIButton *info =
         [UIButton buttonWithType: UIButtonTypeInfoLight];
@@ -154,11 +181,6 @@
     [view addSubview: controls];
 }
 
-- (void) initSimulator
-{
-    // simulator specific hooks
-}
-
 - (void) loadView
 {
     self.view = [[UIView alloc]
@@ -170,9 +192,27 @@
     [super viewDidLoad];
     UIView *view = self.view;
     view.backgroundColor = [UIColor blackColor];
+    view.autoresizingMask =
+        UIViewAutoresizingFlexibleWidth |
+        UIViewAutoresizingFlexibleHeight;
 
     readerView = [[ZBarReaderView alloc]
                      initWithImageScanner: scanner];
+    CGRect bounds = view.bounds;
+    CGRect r = bounds;
+    NSUInteger autoresize =
+        UIViewAutoresizingFlexibleWidth |
+        UIViewAutoresizingFlexibleHeight;
+
+    if(showsZBarControls ||
+       self.parentViewController.modalViewController == self)
+    {
+        autoresize |= UIViewAutoresizingFlexibleBottomMargin;
+        r.size.height -= 54;
+    }
+    readerView.frame = r;
+    readerView.autoresizingMask = autoresize;
+
     readerView.readerDelegate = (id<ZBarReaderViewDelegate>)self;
     readerView.scanCrop = scanCrop;
     readerView.previewTransform = cameraViewTransform;
@@ -183,11 +223,17 @@
     if(cameraOverlayView) {
         assert(!cameraOverlayView.superview);
         [cameraOverlayView removeFromSuperview];
+        cameraOverlayView.frame = readerView.frame;
         [view addSubview: cameraOverlayView];
     }
 
     [self initControls];
-    [self initSimulator];
+
+    if(TARGET_IPHONE_SIMULATOR) {
+        cameraSim = [[ZBarCameraSimulator alloc]
+                        initWithViewController: self];
+        cameraSim.readerView = readerView;
+    }
 }
 
 - (void) viewDidUnload
@@ -199,6 +245,7 @@
 
 - (void) viewWillAppear: (BOOL) animated
 {
+    zlog(@"willAppear: anim=%d", animated);
     [self initControls];
     [super viewWillAppear: animated];
 
@@ -236,6 +283,36 @@
     }
 
     [super viewWillDisappear: animated];
+}
+
+- (BOOL) shouldAutorotateToInterfaceOrientation: (UIInterfaceOrientation) orient
+{
+    return((supportedOrientationsMask >> orient) & 1);
+}
+
+- (void) willRotateToInterfaceOrientation: (UIInterfaceOrientation) orient
+                                 duration: (NSTimeInterval) duration
+{
+    zlog(@"willRotate: orient=%d #%g", orient, duration);
+    if(readerView)
+        [readerView willRotateToInterfaceOrientation: orient
+                    duration: duration];
+}
+
+- (void) willAnimateRotationToInterfaceOrientation: (UIInterfaceOrientation) orient
+                                          duration: (NSTimeInterval) duration
+{
+    zlog(@"willAnimateRotation: orient=%d #%g", orient, duration);
+    if(helpController)
+        [helpController willAnimateRotationToInterfaceOrientation: orient
+                        duration: duration];
+    if(readerView)
+        [readerView setNeedsLayout];
+}
+
+- (void) didRotateFromInterfaceOrientation: (UIInterfaceOrientation) orient
+{
+    zlog(@"didRotate: orient=%d", orient);
 }
 
 - (ZBarReaderView*) readerView
@@ -305,23 +382,30 @@
 
 - (void) showHelpWithReason: (NSString*) reason
 {
-    ZBarHelpController *help =
-        [[ZBarHelpController alloc]
-            initWithReason: reason];
-    help.delegate = (id<ZBarHelpDelegate>)self;
-    help.wantsFullScreenLayout = YES;
-    UIView *helpView = help.view;
+    if(helpController)
+        return;
+    helpController = [[ZBarHelpController alloc]
+                         initWithReason: reason];
+    helpController.delegate = (id<ZBarHelpDelegate>)self;
+    helpController.wantsFullScreenLayout = YES;
+    UIView *helpView = helpController.view;
     helpView.alpha = 0;
+    helpView.frame = self.view.bounds;
+    [helpController viewWillAppear: YES];
     [self.view addSubview: helpView];
     [UIView beginAnimations: @"ZBarHelp"
             context: nil];
-    help.view.alpha = 1;
+    helpController.view.alpha = 1;
     [UIView commitAnimations];
 }
 
 - (void) takePicture
 {
-    if(readerView)
+    if(TARGET_IPHONE_SIMULATOR) {
+        [cameraSim takePicture];
+        // FIXME return selected image
+    }
+    else if(readerView)
         [readerView.captureReader captureFrame];
 }
 
@@ -329,22 +413,24 @@
 
 - (void) helpControllerDidFinish: (ZBarHelpController*) help
 {
+    assert(help == helpController);
+    [help viewWillDisappear: YES];
     [UIView beginAnimations: @"ZBarHelp"
-            context: help];
+            context: NULL];
     [UIView setAnimationDelegate: self];
     [UIView setAnimationDidStopSelector: @selector(removeHelp:done:context:)];
     help.view.alpha = 0;
     [UIView commitAnimations];
 }
 
-- (void) removeHelp: (NSString*) id
+- (void) removeHelp: (NSString*) tag
                done: (NSNumber*) done
             context: (void*) ctx
 {
-    if([id isEqualToString: @"ZBarHelp"]) {
-        ZBarHelpController *help = ctx;
-        [help.view removeFromSuperview];
-        [help release];
+    if([tag isEqualToString: @"ZBarHelp"] && helpController) {
+        [helpController.view removeFromSuperview];
+        [helpController release];
+        helpController = nil;
     }
 }
 

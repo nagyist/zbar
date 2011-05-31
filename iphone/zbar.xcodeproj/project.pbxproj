@@ -91,6 +91,8 @@
 		DC48C5A8121B1F910047193B /* Documentation.html in Copy SDK */ = {isa = PBXBuildFile; fileRef = DC48C5A7121B1F840047193B /* Documentation.html */; };
 		DC4920EE10A70475000E4D43 /* ZBarImage.m in Sources */ = {isa = PBXBuildFile; fileRef = DC4920EC10A70475000E4D43 /* ZBarImage.m */; };
 		DC4920EF10A70475000E4D43 /* ZBarImageScanner.m in Sources */ = {isa = PBXBuildFile; fileRef = DC4920ED10A70475000E4D43 /* ZBarImageScanner.m */; };
+		DC5D76C3136FA8C40069AEF5 /* ZBarCameraSimulator.m in Sources */ = {isa = PBXBuildFile; fileRef = DC5D76C2136FA8C40069AEF5 /* ZBarCameraSimulator.m */; };
+		DC5D76C6136FA94B0069AEF5 /* ZBarCameraSimulator.h in Copy Headers */ = {isa = PBXBuildFile; fileRef = DC5D76C5136FA8F20069AEF5 /* ZBarCameraSimulator.h */; };
 		DC67C17110A07AD30033B702 /* config.c in Sources */ = {isa = PBXBuildFile; fileRef = DC67C11F10A07AD30033B702 /* config.c */; };
 		DC67C17410A07AD30033B702 /* code128.c in Sources */ = {isa = PBXBuildFile; fileRef = DC67C12310A07AD30033B702 /* code128.c */; };
 		DC67C17610A07AD30033B702 /* code39.c in Sources */ = {isa = PBXBuildFile; fileRef = DC67C12510A07AD30033B702 /* code39.c */; };
@@ -115,6 +117,8 @@
 		DC67C1C310A07B6B0033B702 /* ZBarReaderController.m in Sources */ = {isa = PBXBuildFile; fileRef = DC67C1BF10A07B6B0033B702 /* ZBarReaderController.m */; };
 		DC67C1C410A07B6B0033B702 /* ZBarSymbol.m in Sources */ = {isa = PBXBuildFile; fileRef = DC67C1C010A07B6B0033B702 /* ZBarSymbol.m */; };
 		DCB3789B12A43CAC0059B07B /* ZBarHelpController.h in Copy Headers */ = {isa = PBXBuildFile; fileRef = DCB3789A12A43C7E0059B07B /* ZBarHelpController.h */; };
+		DCC93259137B50CB0040A82D /* EmbedReader in Copy Examples */ = {isa = PBXBuildFile; fileRef = DCC9324E137B509B0040A82D /* EmbedReader */; };
+		DCC9325A137B50CB0040A82D /* TabReader in Copy Examples */ = {isa = PBXBuildFile; fileRef = DCC9324F137B509B0040A82D /* TabReader */; };
 		DCDC6E3011ADCA8E00021380 /* ZBarReaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = DCDC6E2F11ADCA8E00021380 /* ZBarReaderView.m */; };
 		DCE9900D129719F100D2655C /* code93.c in Sources */ = {isa = PBXBuildFile; fileRef = DCE9900B129719F100D2655C /* code93.c */; };
 		DCF5C9AD11EA3AD100E7DC21 /* databar.c in Sources */ = {isa = PBXBuildFile; fileRef = DCF5C9AB11EA3AD100E7DC21 /* databar.c */; };
@@ -151,6 +155,7 @@
 			dstPath = Headers/ZBarSDK;
 			dstSubfolderSpec = 1;
 			files = (
+				DC5D76C6136FA94B0069AEF5 /* ZBarCameraSimulator.h in Copy Headers */,
 				DC3CEFB51216349700D7A786 /* ZBarCaptureReader.h in Copy Headers */,
 				DCB3789B12A43CAC0059B07B /* ZBarHelpController.h in Copy Headers */,
 				DC3CEFB61216349700D7A786 /* ZBarImage.h in Copy Headers */,
@@ -206,6 +211,8 @@
 			files = (
 				DC3CF29A1218359400D7A786 /* ReaderSample in Copy Examples */,
 				DC3CF29B1218359400D7A786 /* readertest in Copy Examples */,
+				DCC93259137B50CB0040A82D /* EmbedReader in Copy Examples */,
+				DCC9325A137B50CB0040A82D /* TabReader in Copy Examples */,
 			);
 			name = "Copy Examples";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -278,6 +285,8 @@
 		DC50467B12034D60009FF359 /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README; sourceTree = "<group>"; };
 		DC50467C12034D71009FF359 /* COPYING */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = COPYING; path = ../COPYING; sourceTree = SOURCE_ROOT; };
 		DC50467D12034D71009FF359 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = LICENSE; path = ../LICENSE; sourceTree = SOURCE_ROOT; };
+		DC5D76C2136FA8C40069AEF5 /* ZBarCameraSimulator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ZBarCameraSimulator.m; sourceTree = "<group>"; };
+		DC5D76C5136FA8F20069AEF5 /* ZBarCameraSimulator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ZBarCameraSimulator.h; path = include/ZBarSDK/ZBarCameraSimulator.h; sourceTree = "<group>"; };
 		DC67C08210A079BE0033B702 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		DC67C11710A07A810033B702 /* zbar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zbar.h; path = ../include/zbar.h; sourceTree = SOURCE_ROOT; usesTabs = 0; };
 		DC67C11F10A07AD30033B702 /* config.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = config.c; sourceTree = "<group>"; usesTabs = 0; };
@@ -324,6 +333,8 @@
 		DC67C1C010A07B6B0033B702 /* ZBarSymbol.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ZBarSymbol.m; sourceTree = "<group>"; usesTabs = 0; };
 		DC67C1CB10A07BEE0033B702 /* svg.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = svg.h; sourceTree = "<group>"; usesTabs = 0; };
 		DCB3789A12A43C7E0059B07B /* ZBarHelpController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ZBarHelpController.h; path = include/ZBarSDK/ZBarHelpController.h; sourceTree = "<group>"; };
+		DCC9324E137B509B0040A82D /* EmbedReader */ = {isa = PBXFileReference; lastKnownFileType = folder; name = EmbedReader; path = examples/EmbedReader; sourceTree = "<group>"; };
+		DCC9324F137B509B0040A82D /* TabReader */ = {isa = PBXFileReference; lastKnownFileType = folder; name = TabReader; path = examples/TabReader; sourceTree = "<group>"; };
 		DCDC6E2F11ADCA8E00021380 /* ZBarReaderView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ZBarReaderView.m; sourceTree = "<group>"; usesTabs = 0; };
 		DCE9900B129719F100D2655C /* code93.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = code93.c; sourceTree = "<group>"; };
 		DCE9900C129719F100D2655C /* code93.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = code93.h; sourceTree = "<group>"; };
@@ -410,6 +421,7 @@
 		DC299BE41208FE09006A023C /* ZBarSDK */ = {
 			isa = PBXGroup;
 			children = (
+				DC5D76C5136FA8F20069AEF5 /* ZBarCameraSimulator.h */,
 				DC3CEFA51216347100D7A786 /* ZBarCaptureReader.h */,
 				DCB3789A12A43C7E0059B07B /* ZBarHelpController.h */,
 				DC3CEFA61216347100D7A786 /* ZBarImage.h */,
@@ -436,6 +448,7 @@
 				DCDC6E2F11ADCA8E00021380 /* ZBarReaderView.m */,
 				DC3CE47611FA1622008FAF88 /* ZBarReaderViewImpl_Capture.m */,
 				DC3CE47711FA1622008FAF88 /* ZBarReaderViewImpl_Simulator.m */,
+				DC5D76C2136FA8C40069AEF5 /* ZBarCameraSimulator.m */,
 				DC67C1BE10A07B6B0033B702 /* ZBarHelpController.m */,
 				DC3EBB2C119DDB2100107EE9 /* ZBarReaderViewController.m */,
 				DC67C1BF10A07B6B0033B702 /* ZBarReaderController.m */,
@@ -449,6 +462,8 @@
 			children = (
 				DC3CF2081218358C00D7A786 /* ReaderSample */,
 				DC3CF2651218358C00D7A786 /* readertest */,
+				DCC9324E137B509B0040A82D /* EmbedReader */,
+				DCC9324F137B509B0040A82D /* TabReader */,
 			);
 			name = Examples;
 			sourceTree = "<group>";
@@ -724,6 +739,7 @@
 				DC3CE47811FA1622008FAF88 /* ZBarReaderViewImpl_Capture.m in Sources */,
 				DC3CE47911FA1622008FAF88 /* ZBarReaderViewImpl_Simulator.m in Sources */,
 				DCE9900D129719F100D2655C /* code93.c in Sources */,
+				DC5D76C3136FA8C40069AEF5 /* ZBarCameraSimulator.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -884,8 +900,10 @@
 				);
 				INFOPLIST_FILE = examples/readertest/readertest.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
+				IPHONEOS_DEPLOYMENT_TARGET = 4.0;
 				PREBINDING = NO;
 				PRODUCT_NAME = readertest;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -904,8 +922,10 @@
 				);
 				INFOPLIST_FILE = examples/readertest/readertest.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
+				IPHONEOS_DEPLOYMENT_TARGET = 4.0;
 				PREBINDING = NO;
 				PRODUCT_NAME = readertest;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -990,8 +1010,10 @@
 				);
 				INFOPLIST_FILE = examples/readertest/readertest.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
+				IPHONEOS_DEPLOYMENT_TARGET = 4.0;
 				PREBINDING = NO;
 				PRODUCT_NAME = readertest;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				ZERO_LINK = NO;
 			};
 			name = Distribution;

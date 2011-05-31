@@ -1,4 +1,17 @@
 current:
+  * fix captureReader not exposed to simulator
+  * fix camera preview stale rotation corner
+    - fix ZBarReaderViewController toolbar layout accomodation
+    - switch pre-release samples to use debug library
+  * update docs to note possible link order dependency
+  * add missing references to new samples
+  * add IB support to ZBarReaderViewController
+    - add tabbed reader sample
+  * add embedded reader sample
+    - factor out camera simulation logic
+  * fix readertest max quality result filtering
+    - thanks to John Boydon for finding this!
+  * improve support for resizing, rotating and embedding the reader
   * add readertest fixed zoom stops
   * add manual frame capture
     - readertest save as PNG
