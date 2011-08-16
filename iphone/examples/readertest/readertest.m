@@ -2,6 +2,9 @@ enum {
     CLASS_SECTION = 0,
     SOURCE_SECTION,
     CAMODE_SECTION,
+    DEVICE_SECTION,
+    FLASH_SECTION,
+    QUALITY_SECTION,
     CONFIG_SECTION,
     CUSTOM_SECTION,
     SYMBOL_SECTION,
@@ -13,6 +16,9 @@ static NSString* const section_titles[] = {
     @"Classes",
     @"SourceType",
     @"CameraMode",
+    @"CaptureDevice",
+    @"CameraFlashMode",
+    @"VideoQuality",
     @"Reader Configuration",
     nil,
     @"Enabled Symbologies",
@@ -327,6 +333,45 @@ static const CGFloat const zoom_choices[] = {
     [sections replaceObjectAtIndex: CAMODE_SECTION
               withObject: modes];
 
+    static NSString *const deviceNames[] = {
+        @"Rear", @"Front", nil
+    };
+    NSMutableArray *devices = [NSMutableArray array];
+    for(int i = 0; deviceNames[i]; i++)
+        if([[reader class]
+               isCameraDeviceAvailable: i])
+            [devices addObject:
+                [self cellWithTitle: deviceNames[i]
+                      tag: i
+                      checked: (reader.cameraDevice == i)]];
+    assert(devices.count);
+    [sections replaceObjectAtIndex: DEVICE_SECTION
+              withObject: devices];
+
+    static NSString *const flashNames[] = {
+        @"Off", @"Auto", @"On", nil
+    };
+    NSMutableArray *flashModes = [NSMutableArray array];
+    for(int i = 0; flashNames[i]; i++)
+        [flashModes addObject:
+            [self cellWithTitle: flashNames[i]
+                  tag: i - 1
+                  checked: (reader.cameraFlashMode == i - 1)]];
+    [sections replaceObjectAtIndex: FLASH_SECTION
+              withObject: flashModes];
+
+    static NSString *const qualityNames[] = {
+        @"High", @"Medium", @"Low", @"640x480", nil
+    };
+    NSMutableArray *qualities = [NSMutableArray array];
+    for(int i = 0; qualityNames[i]; i++)
+        [qualities addObject:
+            [self cellWithTitle: qualityNames[i]
+                  tag: i
+                  checked: (reader.videoQuality == i)]];
+    [sections replaceObjectAtIndex: QUALITY_SECTION
+              withObject: qualities];
+
     static NSString* const configNames[] = {
         @"showsCameraControls", @"showsZBarControls", @"tracksSymbols",
         @"enableCache", @"showsHelpOnFail", @"takesPicture",
@@ -413,7 +458,7 @@ static const CGFloat const zoom_choices[] = {
                        [NSNumber numberWithInteger: sym]];
         else
             /* symbologies after ZBAR_EAN5 are disabled by default */
-            en = en && (sym != ZBAR_COMPOSITE);
+            en = en && (sym != ZBAR_EAN2);
         [symbols addObject:
             [self cellWithTitle: [ZBarSymbol nameForType: sym]
                   tag: sym
@@ -730,6 +775,24 @@ static const CGFloat const zoom_choices[] = {
         }
         [self setCheckForTag: reader.cameraMode
               inSection: CAMODE_SECTION];
+        break;
+
+    case DEVICE_SECTION:
+        reader.cameraDevice = cell.tag;
+        [self setCheckForTag: reader.cameraDevice
+              inSection: DEVICE_SECTION];
+        break;
+
+    case FLASH_SECTION:
+        reader.cameraFlashMode = cell.tag;
+        [self setCheckForTag: reader.cameraFlashMode
+              inSection: FLASH_SECTION];
+        break;
+
+    case QUALITY_SECTION:
+        reader.videoQuality = cell.tag;
+        [self setCheckForTag: reader.videoQuality
+              inSection: QUALITY_SECTION];
         break;
 
     case CONFIG_SECTION: {

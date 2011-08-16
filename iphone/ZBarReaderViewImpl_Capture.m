@@ -106,9 +106,13 @@
         [[AVCaptureVideoPreviewLayer
              layerWithSession: session]
             retain];
-    videoPreview.videoGravity = AVLayerVideoGravityResizeAspectFill;
     preview = videoPreview;
-    preview.frame = self.bounds;
+    CGRect bounds = self.bounds;
+    bounds.origin = CGPointZero;
+    preview.bounds = bounds;
+    preview.position = CGPointMake(bounds.size.width / 2,
+                                   bounds.size.height / 2);
+    videoPreview.videoGravity = AVLayerVideoGravityResizeAspectFill;
     [self.layer addSublayer: preview];
 
     [super initSubviews];
@@ -323,8 +327,15 @@
     if(!readerDelegate)
         return;
 
-    UIImageOrientation orient;
-    switch([UIDevice currentDevice].orientation)
+    UIImageOrientation orient = [UIDevice currentDevice].orientation;
+    if(!UIDeviceOrientationIsValidInterfaceOrientation(orient)) {
+        orient = interfaceOrientation;
+        if(orient == UIInterfaceOrientationLandscapeLeft)
+            orient = UIDeviceOrientationLandscapeLeft;
+        else if(orient == UIInterfaceOrientationLandscapeRight)
+            orient = UIDeviceOrientationLandscapeRight;
+    }
+    switch(orient)
     {
     case UIDeviceOrientationPortraitUpsideDown:
         orient = UIImageOrientationLeft;

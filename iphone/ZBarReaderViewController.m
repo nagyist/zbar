@@ -30,11 +30,89 @@
 #define MODULE ZBarReaderViewController
 #import "debug.h"
 
+static inline AVCaptureDevicePosition
+AVPositionForUICamera (UIImagePickerControllerCameraDevice camera)
+{
+    switch(camera) {
+    case UIImagePickerControllerCameraDeviceRear:
+        return(AVCaptureDevicePositionBack);
+    case UIImagePickerControllerCameraDeviceFront:
+        return(AVCaptureDevicePositionFront);
+    }
+    return(-1);
+}
+
+static inline UIImagePickerControllerCameraDevice
+UICameraForAVPosition (AVCaptureDevicePosition position)
+{
+    switch(position)
+    {
+    case AVCaptureDevicePositionBack:
+        return(UIImagePickerControllerCameraDeviceRear);
+    case AVCaptureDevicePositionFront:
+        return(UIImagePickerControllerCameraDeviceFront);
+    }
+    return(-1);
+}
+
+static inline AVCaptureDevice*
+AVDeviceForUICamera (UIImagePickerControllerCameraDevice camera)
+{
+    AVCaptureDevicePosition position = AVPositionForUICamera(camera);
+    if(position < 0)
+        return(nil);
+
+#if !TARGET_IPHONE_SIMULATOR
+    NSArray *allDevices =
+        [AVCaptureDevice devicesWithMediaType: AVMediaTypeVideo];
+    for(AVCaptureDevice *device in allDevices)
+        // FIXME how to quantify "best" of several (theoretical) possibilities
+        if(device.position == position)
+            return(device);
+#endif
+    return(nil);
+}
+
+static inline AVCaptureTorchMode
+AVTorchModeForUIFlashMode (UIImagePickerControllerCameraFlashMode mode)
+{
+    switch(mode)
+    {
+    case UIImagePickerControllerCameraFlashModeAuto:
+        return(AVCaptureTorchModeAuto);
+    case UIImagePickerControllerCameraFlashModeOn:
+        return(AVCaptureTorchModeOn);
+    //case UIImagePickerControllerCameraFlashModeOff:
+    }
+    return(AVCaptureTorchModeOff);
+}
+
+static inline NSString*
+AVSessionPresetForUIVideoQuality (UIImagePickerControllerQualityType quality)
+{
+#if !TARGET_IPHONE_SIMULATOR
+    switch(quality)
+    {
+    case UIImagePickerControllerQualityTypeHigh:
+        return(AVCaptureSessionPresetHigh);
+    case UIImagePickerControllerQualityType640x480:
+        return(AVCaptureSessionPreset640x480);
+    case UIImagePickerControllerQualityTypeMedium:
+        return(AVCaptureSessionPresetMedium);
+    case UIImagePickerControllerQualityTypeLow:
+        return(AVCaptureSessionPresetLow);
+    }
+#endif
+    return(nil);
+}
+
+
 @implementation ZBarReaderViewController
 
 @synthesize scanner, readerDelegate, showsZBarControls,
     supportedOrientationsMask, tracksSymbols, enableCache, cameraOverlayView,
-    cameraViewTransform, readerView, scanCrop;
+    cameraViewTransform, cameraDevice, cameraFlashMode, videoQuality,
+    readerView, scanCrop;
 @dynamic sourceType, allowsEditing, allowsImageEditing, showsCameraControls,
     showsHelpOnFail, cameraMode, takesPicture, maxScanDimension;
 
@@ -46,6 +124,29 @@
            [UIImagePickerController isSourceTypeAvailable: sourceType]);
 }
 
++ (BOOL) isCameraDeviceAvailable: (UIImagePickerControllerCameraDevice) camera
+{
+    return(TARGET_IPHONE_SIMULATOR ||
+           [UIImagePickerController isCameraDeviceAvailable: camera]);
+}
+
++ (BOOL) isFlashAvailableForCameraDevice: (UIImagePickerControllerCameraDevice) camera
+{
+    return(TARGET_IPHONE_SIMULATOR ||
+           [UIImagePickerController isFlashAvailableForCameraDevice: camera]);
+}
+
++ (NSArray*) availableCaptureModesForCameraDevice: (UIImagePickerControllerCameraDevice) camera
+{
+    if(![self isCameraDeviceAvailable: camera])
+        return([NSArray array]);
+
+    // current reader only supports automatic detection
+    return([NSArray arrayWithObject:
+               [NSNumber numberWithInteger:
+                   UIImagePickerControllerCameraCaptureModeVideo]]);
+}
+
 - (void) _init
 {
     supportedOrientationsMask =
@@ -53,6 +154,17 @@
     showsZBarControls = tracksSymbols = enableCache = YES;
     scanCrop = CGRectMake(0, 0, 1, 1);
     cameraViewTransform = CGAffineTransformIdentity;
+
+    cameraFlashMode = UIImagePickerControllerCameraFlashModeAuto;
+    videoQuality = UIImagePickerControllerQualityType640x480;
+    AVCaptureDevice *device = nil;
+#if !TARGET_IPHONE_SIMULATOR
+    device = [AVCaptureDevice defaultDeviceWithMediaType: AVMediaTypeVideo];
+#endif
+    if(device)
+        cameraDevice = UICameraForAVPosition(device.position);
+    else
+        cameraDevice = UIImagePickerControllerCameraDeviceRear;
 
     // create our own scanner to store configuration,
     // independent of whether view is loaded
@@ -181,6 +293,23 @@
     [view addSubview: controls];
 }
 
+- (void) initVideoQuality
+{
+    if(!readerView) {
+        assert(0);
+        return;
+    }
+
+    AVCaptureSession *session = readerView.session;
+    NSString *preset = AVSessionPresetForUIVideoQuality(videoQuality);
+    if(session && preset && [session canSetSessionPreset: preset]) {
+        zlog(@"set session preset=%@", preset);
+        session.sessionPreset = preset;
+    }
+    else
+        zlog(@"unable to set session preset=%@", preset);
+}
+
 - (void) loadView
 {
     self.view = [[UIView alloc]
@@ -212,6 +341,11 @@
     }
     readerView.frame = r;
     readerView.autoresizingMask = autoresize;
+    AVCaptureDevice *device = AVDeviceForUICamera(cameraDevice);
+    if(device && device != readerView.device)
+        readerView.device = device;
+    readerView.torchMode = AVTorchModeForUIFlashMode(cameraFlashMode);
+    [self initVideoQuality];
 
     readerView.readerDelegate = (id<ZBarReaderViewDelegate>)self;
     readerView.scanCrop = scanCrop;
@@ -245,10 +379,13 @@
 
 - (void) viewWillAppear: (BOOL) animated
 {
-    zlog(@"willAppear: anim=%d", animated);
+    zlog(@"willAppear: anim=%d orient=%d",
+         animated, self.interfaceOrientation);
     [self initControls];
     [super viewWillAppear: animated];
 
+    [readerView willRotateToInterfaceOrientation: self.interfaceOrientation
+                duration: 0];
     [readerView start];
 
     UIApplication *app = [UIApplication sharedApplication];
@@ -294,6 +431,7 @@
                                  duration: (NSTimeInterval) duration
 {
     zlog(@"willRotate: orient=%d #%g", orient, duration);
+    rotating = YES;
     if(readerView)
         [readerView willRotateToInterfaceOrientation: orient
                     duration: duration];
@@ -312,7 +450,15 @@
 
 - (void) didRotateFromInterfaceOrientation: (UIInterfaceOrientation) orient
 {
-    zlog(@"didRotate: orient=%d", orient);
+    zlog(@"didRotate(%d): orient=%d", rotating, orient);
+    if(!rotating && readerView) {
+        // work around UITabBarController bug: willRotate is not called
+        // for non-portrait initial interface orientation
+        [readerView willRotateToInterfaceOrientation: self.interfaceOrientation
+                    duration: 0];
+        [readerView setNeedsLayout];
+    }
+    rotating = NO;
 }
 
 - (ZBarReaderView*) readerView
@@ -409,6 +555,43 @@
         [readerView.captureReader captureFrame];
 }
 
+- (void) setCameraDevice: (UIImagePickerControllerCameraDevice) camera
+{
+    cameraDevice = camera;
+    if(readerView) {
+        AVCaptureDevice *device = AVDeviceForUICamera(camera);
+        if(device)
+            readerView.device = device;
+    }
+}
+
+- (void) setCameraFlashMode: (UIImagePickerControllerCameraFlashMode) mode
+{
+    cameraFlashMode = mode;
+    if(readerView)
+        readerView.torchMode = AVTorchModeForUIFlashMode(mode);
+}
+
+- (UIImagePickerControllerCameraCaptureMode) cameraCaptureMode
+{
+    return(UIImagePickerControllerCameraCaptureModeVideo);
+}
+
+- (void) setCameraCaptureMode: (UIImagePickerControllerCameraCaptureMode) mode
+{
+    NSAssert2(mode == UIImagePickerControllerCameraCaptureModeVideo,
+              @"attempt to set unsupported value (%d)"
+              @" for %@ property", mode, @"cameraCaptureMode");
+}
+
+- (void) setVideoQuality: (UIImagePickerControllerQualityType) quality
+{
+    videoQuality = quality;
+    if(readerView)
+        [self initVideoQuality];
+}
+
+
 // ZBarHelpDelegate
 
 - (void) helpControllerDidFinish: (ZBarHelpController*) help
@@ -433,6 +616,7 @@
         helpController = nil;
     }
 }
+
 
 // ZBarReaderViewDelegate
 

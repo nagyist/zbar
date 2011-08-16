@@ -1,4 +1,9 @@
 current:
+  * fix avoid compositing ISBN10 data
+  * add support for GraphicsMagick as ImageMagick alternative
+  * mention xmlto in HACKING (patch #3297039)
+    - thanks to jarekczek for the patch!
+  * disable addons by default until synchronization with main symbol is working
   * fix image scanner min quality filtering
   * fix i25 buffer overrun corner case
   * fix EAN addon enables
