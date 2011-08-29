@@ -268,6 +268,9 @@
     }
     else
         zlog(@"failed to lock device: %@", error);
+
+    if([readerDelegate respondsToSelector: @selector(readerViewDidStart:)])
+        [readerDelegate readerViewDidStart: self];
 }
 
 - (void) onVideoStop: (NSNotification*) note
@@ -278,6 +281,11 @@
 
     [device unlockForConfiguration];
     running = NO;
+
+    if([readerDelegate respondsToSelector:
+                           @selector(readerView:didStopWithError:)])
+        [readerDelegate readerView: self
+                        didStopWithError: nil];
 }
 
 - (void) onVideoError: (NSNotification*) note
@@ -290,9 +298,15 @@
     }
     NSError *err =
         [note.userInfo objectForKey: AVCaptureSessionErrorKey];
-    NSLog(@"ZBarReaderView: ERROR during capture: %@: %@",
-          [err localizedDescription],
-          [err localizedFailureReason]);
+
+    if([readerDelegate respondsToSelector:
+                           @selector(readerView:didStopWithError:)])
+        [readerDelegate readerView: self
+                        didStopWithError: err];
+    else
+        NSLog(@"ZBarReaderView: ERROR during capture: %@: %@",
+              [err localizedDescription],
+              [err localizedFailureReason]);
 }
 
 // NSKeyValueObserving
