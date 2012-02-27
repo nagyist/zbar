@@ -1,4 +1,25 @@
 current:
+  * Codabar reliability enhancements
+    - fix missing check
+    - require minimum quality
+    - bump default uncertainty
+  * tweak Codabar bar/space ratio validation
+  * finish Codabar support for python, perl, java and iPhone interfaces
+    - reduce Codabar uncertainty to minimum
+  * add core support for Codabar symbology
+    - TBD: python, perl, java and iPhone interfaces
+  * fix v4l config and build variations (bug #3348888)
+    - thanks to jarekczek for reporting this!
+    - NB v4l1 removed from kernel as of 2.6.38
+  * fix missing python thread initialization (bug #3349199)
+    - thanks to jarekczek for reporting this problem!
+  * fix missing configure check for Python.h (bug #3092663)
+    - thanks to Zoltan Kovacs for reporting this problem!
+  * fix C++ wrapper missing Symbol.quality (bug #3076524)
+    - thanks to Rudy Melli for pointing this out!
+  * fix C++ wrapper bugs (bug #3396068)
+    - thanks to anotheruser1 for reporting this!
+    - add new C++ wrapper test
   * fix avoid compositing ISBN10 data
   * add support for GraphicsMagick as ImageMagick alternative
   * mention xmlto in HACKING (patch #3297039)

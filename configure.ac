@@ -107,9 +107,9 @@ dnl symbologies
 
 AC_ARG_ENABLE([codes],
   [AS_HELP_STRING([--enable-codes=SYMS],
-    [select symbologies to compile [default=ean,databar,code128,code93,code39,i25,qrcode]])],
+    [select symbologies to compile [default=ean,databar,code128,code93,code39,codabar,i25,qrcode]])],
   [],
-  [enable_codes="ean,databar,code128,code93,code39,i25,qrcode"])
+  [enable_codes="ean,databar,code128,code93,code39,codabar,i25,qrcode"])
 
 AC_DEFUN([ZBAR_CHK_CODE], [
   AC_MSG_CHECKING([whether to build $2])
@@ -131,6 +131,7 @@ ZBAR_CHK_CODE([databar], [DataBar symbology])
 ZBAR_CHK_CODE([code128], [Code 128 symbology])
 ZBAR_CHK_CODE([code93], [Code 93 symbology])
 ZBAR_CHK_CODE([code39], [Code 39 symbology])
+ZBAR_CHK_CODE([codabar], [Codabar symbology])
 ZBAR_CHK_CODE([i25], [Interleaved 2 of 5 symbology])
 ZBAR_CHK_CODE([qrcode], [QR Code])
 ZBAR_CHK_CODE([pdf417], [PDF417 symbology])
@@ -176,23 +177,26 @@ AC_ARG_ENABLE([video],
   [],
   [enable_video="yes"])
 
-with_video="no"
-AS_IF([test "x$enable_video" != "xno"],
-  [AS_IF([test "x$win32" = "xno"],
-    [AC_CHECK_HEADERS([linux/videodev.h], [with_video="v4l1"],
-      [AC_MSG_FAILURE([test for video support failed!
+have_v4l1="no"
+have_v4l2="no"
+AS_IF([test "x$enable_video" = "xno"],
+  [],
+  [test "x$win32" = "xno"],
+  [AC_CHECK_HEADERS([linux/videodev.h], [have_v4l1="yes"])
+   AC_CHECK_HEADERS([linux/videodev2.h], [have_v4l2="yes"])
+   AS_IF([test "x$have_v4l2" = "xno" && test "x$have_v4l1" = "xno"],
+     [AC_MSG_FAILURE([test for video support failed!
 rebuild your kernel to include video4linux support or
-configure --disable-video to skip building video support.])])
-       AC_CHECK_HEADERS([linux/videodev2.h], [with_video="v4l2"],
-         [AC_MSG_WARN([v4l2 API not detected, upgrade your kernel!])])],
-    [AC_CHECK_HEADERS([vfw.h], [with_video="vfw"],
-      [AC_MSG_FAILURE([test for VfW video support failed!
-configure --disable-video to skip building vidoe support.])])])
-])
+configure --disable-video to skip building video support.])],
+     [test "x$have_v4l2" = "xno"],
+     [AC_MSG_WARN([v4l2 API not detected, upgrade your kernel!])])],
+  [AC_CHECK_HEADERS([vfw.h], [with_video="vfw"],
+    [AC_MSG_FAILURE([test for VfW video support failed!
+configure --disable-video to skip building video support.])])])
+
 AM_CONDITIONAL([HAVE_VIDEO], [test "x$enable_video" != "xno"])
-AM_CONDITIONAL([HAVE_V4L1],
-  [test "x$with_video" = "xv4l1" || test "x$with_video" = "xv4l2"])
-AM_CONDITIONAL([HAVE_V4L2], [test "x$with_video" = "xv4l2"])
+AM_CONDITIONAL([HAVE_V4L1], [test "x$have_v4l1" != "xno"])
+AM_CONDITIONAL([HAVE_V4L2], [test "x$have_v4l2" != "xno"])
 
 dnl X
 AC_ARG_VAR([XSHM_LIBS], [linker flags for X shared memory extension])
@@ -436,7 +440,16 @@ AS_IF([test "x$with_python" != "xno"],
      [test -x "$PYTHON-config"],
      [PYTHON_CFLAGS=`$PYTHON-config --cflags`],
      [PYTHON_CFLAGS=`$PYTHON -c 'import distutils.sysconfig as s; print " ".join(s.get_config_vars("CFLAGS")) + " -I"+s.get_python_inc() + " -I"+s.get_python_inc(plat_specific=True)'`])
-dnl FIXME now should check that #include <Python.h> compiles
+
+dnl check that #include <Python.h> compiles (bug #3092663)
+   CPPFLAGS_save="$CPPFLAGS"
+   CPPFLAGS="$CPPFLAGS $PYTHON_CFLAGS"
+   AC_CHECK_HEADER([Python.h], [], [AC_MSG_ERROR([dnl
+Python module enabled, but unable to compile Python.h.
+Install the development package for python-$am_cv_python_version, or configure
+--without-python to disable the python bindings.dnl
+])])
+   CPPFLAGS="$CPPFLAGS_save"
 
    AS_IF([test "x$with_gtk" = "xyes"],
      [PKG_CHECK_MODULES([PYGTK], [pygtk-2.0])
@@ -500,7 +513,8 @@ dnl header files
 dnl FIXME switches for shm, mmap
 AC_HEADER_ASSERT
 AC_CHECK_HEADERS([errno.h fcntl.h features.h inttypes.h stdlib.h string.h \
-  unistd.h sys/ioctl.h sys/time.h sys/times.h sys/ipc.h sys/shm.h sys/mman.h])
+  unistd.h sys/types.h sys/stat.h sys/ioctl.h sys/time.h sys/times.h \
+  sys/ipc.h sys/shm.h sys/mman.h])
 
 dnl types
 
